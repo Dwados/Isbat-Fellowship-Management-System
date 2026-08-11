@@ -1,0 +1,52 @@
+import { format } from 'date-fns';
+import { LayoutDashboard } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+
+export default function KioskPage() {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const checkInUrl = window.location.origin + '/check-in';
+
+  return (
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-brand-950 px-6 py-12 text-white">
+      <div className="pointer-events-none absolute -left-40 -top-40 h-96 w-96 rounded-full bg-brand-600/30 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-48 -right-32 h-[30rem] w-[30rem] rounded-full bg-sky-400/20 blur-3xl" />
+
+      <div className="relative z-10 flex w-full max-w-md flex-col items-center text-center">
+        <p className="text-xs font-bold uppercase tracking-[0.3em] text-brand-300">
+          IF Management System
+        </p>
+        <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-brand-100">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" /> LIVE
+        </span>
+        <p className="mt-5 text-5xl font-extrabold tabular-nums sm:text-6xl">
+          {format(now, 'h:mm:ss a')}
+        </p>
+        <p className="mt-2 text-sm font-medium text-brand-300">
+          {format(now, 'EEEE, MMMM d, yyyy')}
+        </p>
+
+        <div className="mt-10 rounded-3xl bg-white p-5 shadow-2xl shadow-black/40">
+          <QRCodeSVG value={checkInUrl} size={220} level="M" fgColor="#082f49" bgColor="#ffffff" />
+        </div>
+
+        <h1 className="mt-8 text-2xl font-bold sm:text-3xl">Scan to check in</h1>
+        <p className="mt-2 break-all font-mono text-sm text-brand-300">{checkInUrl}</p>
+
+        <Link
+          to="/dashboard"
+          className="mt-10 inline-flex items-center gap-2 rounded-xl border border-brand-700 px-4 py-2.5 text-sm font-medium text-brand-200 transition-colors hover:bg-brand-900 hover:text-white"
+        >
+          <LayoutDashboard className="h-4 w-4" /> Admin dashboard
+        </Link>
+      </div>
+    </div>
+  );
+}
