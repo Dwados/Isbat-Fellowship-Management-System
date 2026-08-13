@@ -1,30 +1,81 @@
 import { Lock, UserRound } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 
 const STORAGE_KEY = 'fa_admin_unlocked_v2';
+const LOCKOUT_KEY = 'fa_admin_lockout';
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || '';
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export function lockAdmin() {
-  localStorage.removeItem(STORAGE_KEY);
+  sessionStorage.removeItem(STORAGE_KEY);
 }
 
 export default function AdminGate() {
-  const [unlocked, setUnlocked] = useState(() => localStorage.getItem(STORAGE_KEY) === '1');
+  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem(STORAGE_KEY) === '1');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [attempts, setAttempts] = useState(() => parseInt(sessionStorage.getItem('fa_admin_attempts') || '0', 10));
+  const [lockedUntil, setLockedUntil] = useState(() => {
+    const stored = sessionStorage.getItem(LOCKOUT_KEY);
+    return stored ? parseInt(stored, 10) : 0;
+  });
+  const [secondsLeft, setSecondsLeft] = useState(0);
+
+  // Countdown timer for lockout
+  useEffect(() => {
+    if (lockedUntil <= 0) return undefined;
+    const remaining = Math.ceil((lockedUntil - Date.now()) / 1000);
+    if (remaining <= 0) {
+      setLockedUntil(0);
+      setAttempts(0);
+      sessionStorage.removeItem(LOCKOUT_KEY);
+      sessionStorage.setItem('fa_admin_attempts', '0');
+      return undefined;
+    }
+    setSecondsLeft(remaining);
+    const timer = setInterval(() => {
+      setSecondsLeft((s) => Math.max(0, s - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockedUntil]);
 
   function handleSubmit(e) {
     e.preventDefault();
     if (!ADMIN_PASSWORD) return;
+
+    // Check if locked out
+    const now = Date.now();
+    if (lockedUntil > now) {
+      setError('Too many attempts. Please try again later.');
+      return;
+    }
+
     if (password === ADMIN_PASSWORD) {
-      localStorage.setItem(STORAGE_KEY, '1');
+      sessionStorage.setItem(STORAGE_KEY, '1');
+      sessionStorage.removeItem('fa_admin_attempts');
+      sessionStorage.removeItem(LOCKOUT_KEY);
       setUnlocked(true);
     } else {
-      setError('Incorrect password. Only IF admins can access this dashboard.');
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      sessionStorage.setItem('fa_admin_attempts', String(newAttempts));
+
+      if (newAttempts >= MAX_ATTEMPTS) {
+        const lockUntilTime = now + LOCKOUT_DURATION;
+        setLockedUntil(lockUntilTime);
+        sessionStorage.setItem(LOCKOUT_KEY, String(lockUntilTime));
+        setError('Too many incorrect attempts. Try again in 5 minutes.');
+      } else {
+        const remaining = MAX_ATTEMPTS - newAttempts;
+        setError(`Incorrect password. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`);
+      }
       setPassword('');
     }
   }
+
+  const isLocked = lockedUntil > Date.now();
 
   if (unlocked) return <Outlet />;
 
@@ -44,13 +95,19 @@ export default function AdminGate() {
               type="password"
               autoFocus
               autoComplete="off"
-              className="input mt-6"
+              disabled={isLocked}
+              className="input mt-6 disabled:bg-stone-100 disabled:text-stone-400"
               placeholder="Admin password"
               value={password}
-              onChange={(e) => { setPassword(e.target.value); setError(''); }}
+              onChange={(e) => { setPassword(e.target.value); if (!isLocked) setError(''); }}
             />
             {error && <p className="mt-2 text-sm text-red-600" role="alert">{error}</p>}
-            <button type="submit" className="btn-primary mt-5 w-full py-3">
+            {isLocked && (
+              <p className="mt-3 text-sm font-medium text-amber-600">
+                Unlocks in {secondsLeft}s
+              </p>
+            )}
+            <button type="submit" disabled={isLocked} className="btn-primary mt-5 w-full py-3 disabled:opacity-50 disabled:cursor-not-allowed">
               <Lock className="h-4 w-4" /> Sign in
             </button>
           </>

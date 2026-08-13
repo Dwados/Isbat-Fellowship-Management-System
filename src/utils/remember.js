@@ -1,10 +1,10 @@
 const STORAGE_KEY = 'if_remembered_member';
 
-/** Save the last member who checked in successfully on this device. */
+/** Save the last member who checked in successfully on this device (session-only, auto-clears on browser close). */
 export function saveRememberedMember(member) {
   if (!member?.phone) return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
       phone: member.phone,
       name: member.name,
       savedAt: new Date().toISOString(),
@@ -14,10 +14,10 @@ export function saveRememberedMember(member) {
   }
 }
 
-/** Returns { phone, name, savedAt } or null. */
+/** Returns { phone, name, savedAt } or null. Auto-clears when browser closes. */
 export function getRememberedMember() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed?.phone) return null;
@@ -28,5 +28,5 @@ export function getRememberedMember() {
 }
 
 export function clearRememberedMember() {
-  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  try { sessionStorage.removeItem(STORAGE_KEY); } catch (e) {}
 }

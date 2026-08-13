@@ -45,6 +45,10 @@ drop policy if exists "members_insert"    on public.members;
 drop policy if exists "attendance_select" on public.attendance;
 drop policy if exists "attendance_insert" on public.attendance;
 
+-- Note: RLS is enabled but policies are permissive because this app uses Supabase anon key.
+-- To properly restrict access, implement Supabase Auth (users sign in with email/password).
+-- For now, these policies allow all authenticated operations via the anon key.
+-- Future improvement: Migrate to Supabase Auth and use auth.role() checks.
 create policy "members_select"    on public.members    for select using (true);
 create policy "members_insert"    on public.members    for insert with check (true);
 create policy "attendance_select" on public.attendance for select using (true);
