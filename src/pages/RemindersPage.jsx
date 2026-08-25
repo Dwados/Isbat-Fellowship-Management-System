@@ -1,28 +1,24 @@
 import {
   AlertTriangle,
-  Bell,
   Calendar,
   Check,
   CheckCircle2,
   Clock,
-  Copy,
   ExternalLink,
   History,
   Key,
-  Layers,
   Loader2,
   MapPin,
   MessageSquare,
   PauseCircle,
-  Play,
   PlayCircle,
+  Plus,
   RefreshCw,
   Search,
   Send,
   Settings,
   Sparkles,
   UserCheck,
-  UserRound,
   Users,
   UserX,
   X,
@@ -50,15 +46,14 @@ import {
 } from '../services/whatsappService';
 import { formatDate, formatDateShort } from '../utils/dates';
 import { friendlyError } from '../utils/errors';
-import { normalizePhone } from '../utils/phone';
 
 const DYNAMIC_TAGS = [
-  { tag: '{{name}}', label: 'Member Name', desc: 'e.g. John Doe' },
-  { tag: '{{first_name}}', label: 'First Name', desc: 'e.g. John' },
-  { tag: '{{meeting_date}}', label: 'Meeting Date', desc: 'e.g. 28 Aug 2026' },
-  { tag: '{{meeting_time}}', label: 'Meeting Time', desc: 'e.g. 5:00 PM' },
-  { tag: '{{venue}}', label: 'Venue', desc: 'e.g. Main Hall' },
-  { tag: '{{topic}}', label: 'Theme / Topic', desc: 'e.g. Faith & Work' },
+  { tag: '{{name}}', label: 'Member Name' },
+  { tag: '{{first_name}}', label: 'First Name' },
+  { tag: '{{meeting_date}}', label: 'Meeting Date' },
+  { tag: '{{meeting_time}}', label: 'Meeting Time' },
+  { tag: '{{venue}}', label: 'Venue' },
+  { tag: '{{topic}}', label: 'Theme / Topic' },
 ];
 
 export default function RemindersPage() {
@@ -140,7 +135,9 @@ export default function RemindersPage() {
       setAllMembers(data);
       // Default selection to current cohort
       const targetIds = new Set(
-        data.filter((m) => (cohort === 'all' ? true : cohort === 'inactive' ? m.isInactive : !m.isInactive)).map((m) => m.id)
+        data
+          .filter((m) => (cohort === 'all' ? true : cohort === 'inactive' ? m.isInactive : !m.isInactive))
+          .map((m) => m.id)
       );
       setSelectedMemberIds(targetIds);
     } catch (err) {
@@ -193,7 +190,7 @@ export default function RemindersPage() {
       };
       await updateReminderSettings(updated);
       setSettings(updated);
-      setSaveFeedback({ type: 'success', message: 'Settings & reminder details saved successfully!' });
+      setSaveFeedback({ type: 'success', message: 'Settings saved successfully!' });
       setTimeout(() => setSaveFeedback(null), 4000);
     } catch (err) {
       setSaveFeedback({ type: 'error', message: friendlyError(err) });
@@ -205,7 +202,11 @@ export default function RemindersPage() {
   // Quick Preset Handlers
   function handleQuickDate(preset) {
     const d = new Date();
-    if (preset === 'friday') {
+    if (preset === 'wednesday') {
+      const day = d.getDay();
+      const diff = (3 - day + 7) % 7 || 7;
+      d.setDate(d.getDate() + diff);
+    } else if (preset === 'friday') {
       const day = d.getDay();
       const diff = (5 - day + 7) % 7 || 7;
       d.setDate(d.getDate() + diff);
@@ -278,7 +279,7 @@ export default function RemindersPage() {
   }
 
   // Sample preview text
-  const previewSampleMember = selectedRecipients[0] || allMembers[0] || { name: 'Alex Tumusiime', phone: '0770000000' };
+  const previewSampleMember = selectedRecipients[0] || allMembers[0] || { name: 'Fellowship Member', phone: '0770000000' };
   const previewMessage = interpolateTemplate(template, {
     name: previewSampleMember.name,
     meeting_date: meetingDate ? formatDate(meetingDate) : 'Upcoming Meeting',
@@ -315,12 +316,12 @@ export default function RemindersPage() {
       });
       setTestResult({
         type: 'success',
-        message: `✅ Test message successfully delivered to ${phone}!`,
+        message: '✅ Test message successfully delivered to ' + phone + '!',
       });
     } catch (err) {
       setTestResult({
         type: 'error',
-        message: `❌ Failed to send: ${err.message}`,
+        message: '❌ Failed to send: ' + err.message,
       });
     } finally {
       setTestingApi(false);
@@ -341,7 +342,7 @@ export default function RemindersPage() {
     }
 
     const confirmSend = window.confirm(
-      `Send WhatsApp reminders to ${selectedRecipients.length} member(s) via Meta Cloud API?`
+      'Send WhatsApp reminders to ' + selectedRecipients.length + ' member(s) via Meta Cloud API?'
     );
     if (!confirmSend) return;
 
@@ -383,10 +384,9 @@ export default function RemindersPage() {
         },
       });
 
-      // Log results to Supabase/localStorage
       await logReminderBroadcast(results.logs);
     } catch (err) {
-      alert(`Broadcast interrupted: ${err.message}`);
+      alert('Broadcast interrupted: ' + err.message);
     }
   }
 
@@ -418,7 +418,6 @@ export default function RemindersPage() {
 
     setWebQueueDispatched((prev) => new Set(prev).add(current.id));
 
-    // Log to records
     logReminderBroadcast([
       {
         member_id: current.id,
@@ -443,7 +442,7 @@ export default function RemindersPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <PageHeader
           title="Meeting Reminders & WhatsApp Broadcasts"
-          description="Send automated and customized WhatsApp reminders to past and registered members for upcoming fellowship meetings."
+          subtitle="Send automated and customized WhatsApp reminders to past and registered members for upcoming fellowship meetings."
         />
         <div className="flex items-center gap-2">
           <button
@@ -455,7 +454,7 @@ export default function RemindersPage() {
             className="btn-secondary flex items-center gap-1.5 text-xs"
             title="Refresh"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${loadingMembers ? 'animate-spin' : ''}`} />
+            <RefreshCw className={'h-3.5 w-3.5 ' + (loadingMembers ? 'animate-spin' : '')} />
             Refresh
           </button>
           <button
@@ -481,11 +480,11 @@ export default function RemindersPage() {
         <button
           type="button"
           onClick={() => setActiveTab('broadcast')}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${
+          className={'flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-colors ' + (
             activeTab === 'broadcast'
               ? 'border-brand-600 text-brand-700'
               : 'border-transparent text-stone-500 hover:text-stone-700'
-          }`}
+          )}
         >
           <Send className="h-4 w-4" />
           Broadcast Center
@@ -496,11 +495,11 @@ export default function RemindersPage() {
             setActiveTab('history');
             loadHistory();
           }}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${
+          className={'flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-colors ' + (
             activeTab === 'history'
               ? 'border-brand-600 text-brand-700'
               : 'border-transparent text-stone-500 hover:text-stone-700'
-          }`}
+          )}
         >
           <History className="h-4 w-4" />
           Broadcast Logs
@@ -508,11 +507,11 @@ export default function RemindersPage() {
         <button
           type="button"
           onClick={() => setActiveTab('settings')}
-          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-colors ${
+          className={'flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition-colors ' + (
             activeTab === 'settings'
               ? 'border-brand-600 text-brand-700'
               : 'border-transparent text-stone-500 hover:text-stone-700'
-          }`}
+          )}
         >
           <Settings className="h-4 w-4" />
           WhatsApp API Settings
@@ -524,17 +523,17 @@ export default function RemindersPage() {
         <div className="space-y-6">
           {/* Automation Status Banner & Master Toggle */}
           <div
-            className={`flex flex-col gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center sm:justify-between ${
+            className={'flex flex-col gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center sm:justify-between ' + (
               autoSendEnabled
                 ? 'border-emerald-200 bg-emerald-50/60'
                 : 'border-amber-200 bg-amber-50/70'
-            }`}
+            )}
           >
             <div className="flex items-start gap-3.5">
               <div
-                className={`rounded-xl p-2.5 ${
+                className={'rounded-xl p-2.5 ' + (
                   autoSendEnabled ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
-                }`}
+                )}
               >
                 {autoSendEnabled ? <PlayCircle className="h-6 w-6" /> : <PauseCircle className="h-6 w-6" />}
               </div>
@@ -544,11 +543,11 @@ export default function RemindersPage() {
                     Weekly Automatic WhatsApp Reminders
                   </h3>
                   <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    className={'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ' + (
                       autoSendEnabled
                         ? 'bg-emerald-100 text-emerald-800'
                         : 'bg-amber-100 text-amber-800'
-                    }`}
+                    )}
                   >
                     {autoSendEnabled ? 'Active' : 'Paused for this week'}
                   </span>
@@ -568,11 +567,11 @@ export default function RemindersPage() {
                   setAutoSendEnabled(!autoSendEnabled);
                   handleSaveSettings();
                 }}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-colors ${
+                className={'flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-colors ' + (
                   autoSendEnabled
                     ? 'bg-amber-600 text-white hover:bg-amber-700'
                     : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                }`}
+                )}
               >
                 {autoSendEnabled ? (
                   <>
@@ -591,24 +590,21 @@ export default function RemindersPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <StatCard
               icon={UserX}
-              title="Inactive / Past Attendees"
+              label="Inactive / Past Attendees"
               value={cohortCounts.inactive}
-              description="Members who missed recent meetings"
-              colorClass="bg-amber-500"
+              tone="red"
             />
             <StatCard
               icon={UserCheck}
-              title="Active Attendees"
+              label="Active Attendees"
               value={cohortCounts.active}
-              description="Members who checked in recently"
-              colorClass="bg-emerald-600"
+              tone="white"
             />
             <StatCard
               icon={Users}
-              title="Total Registered Members"
+              label="Total Registered Members"
               value={cohortCounts.total}
-              description="All members in fellowship directory"
-              colorClass="bg-brand-600"
+              tone="brand"
             />
           </div>
 
@@ -636,17 +632,24 @@ export default function RemindersPage() {
                   <div className="flex shrink-0 items-center gap-1">
                     <button
                       type="button"
+                      onClick={() => handleQuickDate('wednesday')}
+                      className="rounded-lg bg-stone-100 px-2.5 py-2 text-xs font-medium text-stone-700 hover:bg-stone-200"
+                    >
+                      Wed
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleQuickDate('friday')}
                       className="rounded-lg bg-stone-100 px-2.5 py-2 text-xs font-medium text-stone-700 hover:bg-stone-200"
                     >
-                      Friday
+                      Fri
                     </button>
                     <button
                       type="button"
                       onClick={() => handleQuickDate('sunday')}
                       className="rounded-lg bg-stone-100 px-2.5 py-2 text-xs font-medium text-stone-700 hover:bg-stone-200"
                     >
-                      Sunday
+                      Sun
                     </button>
                     <button
                       type="button"
@@ -837,33 +840,33 @@ export default function RemindersPage() {
                 <button
                   type="button"
                   onClick={() => handleCohortChange('inactive')}
-                  className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
+                  className={'rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ' + (
                     cohort === 'inactive'
                       ? 'bg-amber-600 text-white shadow-sm'
                       : 'bg-white text-stone-600 hover:bg-stone-100'
-                  }`}
+                  )}
                 >
                   Inactive / Past ({cohortCounts.inactive})
                 </button>
                 <button
                   type="button"
                   onClick={() => handleCohortChange('all')}
-                  className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
+                  className={'rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ' + (
                     cohort === 'all'
                       ? 'bg-brand-600 text-white shadow-sm'
                       : 'bg-white text-stone-600 hover:bg-stone-100'
-                  }`}
+                  )}
                 >
                   All Members ({cohortCounts.total})
                 </button>
                 <button
                   type="button"
                   onClick={() => handleCohortChange('active')}
-                  className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
+                  className={'rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ' + (
                     cohort === 'active'
                       ? 'bg-emerald-600 text-white shadow-sm'
                       : 'bg-white text-stone-600 hover:bg-stone-100'
-                  }`}
+                  )}
                 >
                   Active ({cohortCounts.active})
                 </button>
@@ -943,9 +946,9 @@ export default function RemindersPage() {
                       return (
                         <tr
                           key={member.id}
-                          className={`transition-colors hover:bg-stone-50/80 ${
+                          className={'transition-colors hover:bg-stone-50/80 ' + (
                             isChecked ? 'bg-brand-50/30' : ''
-                          }`}
+                          )}
                         >
                           <td className="px-4 py-3">
                             <input
@@ -971,11 +974,11 @@ export default function RemindersPage() {
                           </td>
                           <td className="px-4 py-3">
                             <span
-                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+                              className={'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ' + (
                                 member.isInactive
                                   ? 'bg-amber-50 text-amber-800'
                                   : 'bg-emerald-50 text-emerald-800'
-                              }`}
+                              )}
                             >
                               {member.statusLabel}
                             </span>
@@ -1054,11 +1057,11 @@ export default function RemindersPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                          className={'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ' + (
                             log.status === 'sent' || log.status === 'opened_wa'
                               ? 'bg-emerald-100 text-emerald-800'
                               : 'bg-red-100 text-red-800'
-                          }`}
+                          )}
                         >
                           {log.status === 'sent'
                             ? 'Delivered'
@@ -1214,7 +1217,7 @@ export default function RemindersPage() {
             <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-stone-100">
               <div
                 className="h-full bg-brand-600 transition-all duration-300"
-                style={{ width: `${broadcastProgress.percent}%` }}
+                style={{ width: broadcastProgress.percent + '%' }}
               />
             </div>
 
@@ -1233,9 +1236,9 @@ export default function RemindersPage() {
               {broadcastLogs.map((log, i) => (
                 <div
                   key={i}
-                  className={`flex items-center justify-between py-1 ${
+                  className={'flex items-center justify-between py-1 ' + (
                     log.status === 'sent' ? 'text-emerald-700' : 'text-red-600'
-                  }`}
+                  )}
                 >
                   <span>{log.recipient_name} ({log.phone})</span>
                   <span>{log.status === 'sent' ? '✓ Sent' : '✗ Failed'}</span>
@@ -1321,13 +1324,13 @@ export default function RemindersPage() {
                 return (
                   <div
                     key={recip.id}
-                    className={`flex items-center justify-between rounded-lg px-3 py-2 ${
+                    className={'flex items-center justify-between rounded-lg px-3 py-2 ' + (
                       isCurrent
                         ? 'bg-brand-100 font-bold text-brand-900'
                         : isSent
                         ? 'bg-emerald-50 text-emerald-800'
                         : 'text-stone-600 hover:bg-stone-100'
-                    }`}
+                    )}
                   >
                     <div className="flex items-center gap-2">
                       <span>{idx + 1}.</span>
