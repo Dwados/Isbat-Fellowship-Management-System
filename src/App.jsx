@@ -8,7 +8,9 @@ import DashboardPage from './pages/DashboardPage';
 import KioskPage from './pages/KioskPage';
 import MemberProfilePage from './pages/MemberProfilePage';
 import MembersPage from './pages/MembersPage';
+import ManualCheckInPage from './pages/ManualCheckInPage';
 import NotFoundPage from './pages/NotFoundPage';
+import RemindersPage from './pages/RemindersPage';
 
 export default function App() {
   return (
@@ -24,7 +26,9 @@ export default function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/members" element={<MembersPage />} />
           <Route path="/members/:id" element={<MemberProfilePage />} />
+          <Route path="/manual-checkin" element={<ManualCheckInPage />} />
           <Route path="/attendance" element={<AttendancePage />} />
+          <Route path="/reminders" element={<RemindersPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
         </Route>
       </Route>

@@ -1,4 +1,4 @@
-import { BarChart3, ClipboardCheck, LayoutDashboard, LogOut, QrCode, UserCheck, UserRound, Users } from 'lucide-react';
+import { BarChart3, ClipboardCheck, LayoutDashboard, LogOut, MessageSquare, QrCode, UserCheck, UserRound, Users } from 'lucide-react';
 import { Link, NavLink, Outlet } from 'react-router-dom';
 import { lockAdmin } from './AdminGate';
 import ConfigBanner from './ConfigBanner';
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { to: '/members', label: 'Members', icon: Users },
   { to: '/manual-checkin', label: 'Manual Check-in', icon: UserCheck },
   { to: '/attendance', label: 'Attendance', icon: ClipboardCheck },
+  { to: '/reminders', label: 'Reminders', icon: MessageSquare },
   { to: '/analytics', label: 'Analytics', icon: BarChart3 },
 ];
 
@@ -104,7 +105,7 @@ export default function Layout() {
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-stone-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t border-stone-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
         {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}

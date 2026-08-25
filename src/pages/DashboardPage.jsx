@@ -1,6 +1,5 @@
-
 import { format } from 'date-fns';
-import { CalendarCheck, RefreshCw, Sparkles, TrendingUp, UserRound, UserX } from 'lucide-react';
+import { CalendarCheck, MessageSquare, RefreshCw, Sparkles, TrendingUp, UserRound, UserX } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
@@ -119,6 +118,9 @@ export default function DashboardPage() {
         title="Dashboard"
         subtitle={format(new Date(), 'EEEE, MMMM d, yyyy') + ' · Wednesday-only tracking'}
       >
+        <Link to="/reminders" className="btn-primary">
+          <MessageSquare className="h-4 w-4" /> Send Reminders
+        </Link>
         <button type="button" onClick={refreshAll} className="btn-secondary">
           <RefreshCw className="h-4 w-4" /> Refresh
         </button>
