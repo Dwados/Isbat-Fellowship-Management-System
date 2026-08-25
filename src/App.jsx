@@ -14,11 +14,12 @@ import NotFoundPage from './pages/NotFoundPage';
 export default function App() {
   return (
     <Routes>
-      {/* Public: kiosk + member sign-in */}
+      {/* Public: kiosk + student check-in (/check-in and short /c both work) */}
       <Route path="/" element={<KioskPage />} />
       <Route path="/check-in" element={<CheckInPage />} />
+      <Route path="/c" element={<CheckInPage />} />
 
-      {/* Admin-only (PIN protected) */}
+      {/* Admin-only (password protected) */}
       <Route element={<AdminGate />}>
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<DashboardPage />} />

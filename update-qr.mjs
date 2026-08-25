@@ -1,3 +1,49 @@
+// update-qr.mjs — shorter QR url (/c), stronger QR, manual fallback on kiosk
+// Usage: node update-qr.mjs
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+
+const files = {
+
+'src/App.jsx': `
+import { Route, Routes } from 'react-router-dom';
+import AdminGate from './components/AdminGate';
+import Layout from './components/Layout';
+import AnalyticsPage from './pages/AnalyticsPage';
+import AttendancePage from './pages/AttendancePage';
+import CheckInPage from './pages/CheckInPage';
+import DashboardPage from './pages/DashboardPage';
+import KioskPage from './pages/KioskPage';
+import MemberProfilePage from './pages/MemberProfilePage';
+import MembersPage from './pages/MembersPage';
+import NotFoundPage from './pages/NotFoundPage';
+
+export default function App() {
+  return (
+    <Routes>
+      {/* Public: kiosk + student check-in (/check-in and short /c both work) */}
+      <Route path="/" element={<KioskPage />} />
+      <Route path="/check-in" element={<CheckInPage />} />
+      <Route path="/c" element={<CheckInPage />} />
+
+      {/* Admin-only (password protected) */}
+      <Route element={<AdminGate />}>
+        <Route element={<Layout />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/members" element={<MembersPage />} />
+          <Route path="/members/:id" element={<MemberProfilePage />} />
+          <Route path="/attendance" element={<AttendancePage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
+  );
+}
+`,
+
+'src/pages/KioskPage.jsx': `
 import { format } from 'date-fns';
 import { LayoutDashboard } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -68,3 +114,19 @@ export default function KioskPage() {
     </div>
   );
 }
+`,
+
+};
+
+let count = 0;
+for (const [filePath, content] of Object.entries(files)) {
+  const full = join(process.cwd(), filePath);
+  mkdirSync(dirname(full), { recursive: true });
+  writeFileSync(full, content.startsWith('\n') ? content.slice(1) : content);
+  console.log('updated', filePath);
+  count += 1;
+}
+console.log('');
+console.log('Done! ' + count + ' files updated.');
+console.log('Now push to GitHub so Vercel redeploys:');
+console.log('  git add . && git commit -m "Short QR + manual fallback" && git push');
