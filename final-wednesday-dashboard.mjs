@@ -1,4 +1,7 @@
+// final-wednesday-dashboard.mjs — Bulletproof Wednesday Dashboard
+import { writeFileSync } from 'node:fs';
 
+const dashboardCode = `
 import { format } from 'date-fns';
 import { CalendarCheck, RefreshCw, Sparkles, TrendingUp, UserRound, UserX } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -172,3 +175,7 @@ export default function DashboardPage() {
     </>
   );
 }
+`;
+
+writeFileSync('src/pages/DashboardPage.jsx', dashboardCode);
+console.log('Bulletproof Wednesday Dashboard applied!');
