@@ -1,14 +1,18 @@
-import { startOfTodayISO, todayISO } from '../utils/dates';
+import { isWednesdayToday, lastMeetingDateISO, startOfDayISO } from '../utils/dates';
 import { countAttendanceForDate } from './attendanceService';
 import { countMembers, countNewMembersSince } from './membersService';
 
 export async function getDashboardStats() {
+  const meetingDate = lastMeetingDateISO();
+  const isMeetingToday = isWednesdayToday();
   const [attendanceToday, totalMembers, newMembersToday] = await Promise.all([
-    countAttendanceForDate(todayISO()),
+    countAttendanceForDate(meetingDate),
     countMembers(),
-    countNewMembersSince(startOfTodayISO()),
+    countNewMembersSince(startOfDayISO(meetingDate)),
   ]);
   return {
+    meetingDate,
+    isMeetingToday,
     attendanceToday,
     totalMembers,
     newMembersToday,

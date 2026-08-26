@@ -113,3 +113,19 @@ export async function getLastMeetings(n = 7) {
     .map((r) => ({ date: r.attendance_date, count: Number(r.check_ins) }))
     .reverse();
 }
+
+
+/** Last n Wednesdays (oldest first) with check-in counts (0 when nobody attended). */
+export async function getWednesdayMeetings(n = 6) {
+  const diff = (new Date().getDay() - 3 + 7) % 7;
+  const dates = [];
+  for (let i = 0; i < n; i += 1) dates.push(daysAgoISO(diff + i * 7));
+  dates.reverse();
+  const { data, error } = await supabase.rpc('attendance_by_day', {
+    range_start: dates[0],
+    range_end: dates[dates.length - 1],
+  });
+  if (error) throw error;
+  const counts = new Map((data ?? []).map((r) => [r.attendance_date, Number(r.check_ins)]));
+  return dates.map((date) => ({ date, count: counts.get(date) ?? 0 }));
+}

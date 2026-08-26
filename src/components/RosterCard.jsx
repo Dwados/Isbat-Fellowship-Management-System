@@ -7,19 +7,21 @@ import Alert from './Alert';
 import Avatar from './Avatar';
 import LoadingBlock from './LoadingBlock';
 
-export default function RosterCard({ refreshToken = null, title = "Today's attendance" }) {
+export default function RosterCard({ refreshToken = null, title = "Today's attendance", dateISO = null }) {
   const [roster, setRoster] = useState(null);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState('attended');
 
   useEffect(() => {
+    if (!dateISO) return undefined;
     let active = true;
     setError(null);
-    getRosterForDate()
+    setRoster(null);
+    getRosterForDate(dateISO)
       .then((data) => active && setRoster(data))
       .catch((err) => active && setError(friendlyError(err)));
     return () => { active = false; };
-  }, [refreshToken]);
+  }, [refreshToken, dateISO]);
 
   const attended = (roster ?? []).filter((m) => m.attended);
   const missed = (roster ?? []).filter((m) => !m.attended);
@@ -48,9 +50,7 @@ export default function RosterCard({ refreshToken = null, title = "Today's atten
               type="button"
               onClick={() => setTab('attended')}
               className={'flex items-center justify-center gap-2 border-b-2 py-3 transition-colors ' +
-                (tab === 'attended'
-                  ? 'border-brand-600 bg-brand-50 text-brand-700'
-                  : 'border-transparent text-stone-500 hover:text-stone-700')}
+                (tab === 'attended' ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-transparent text-stone-500 hover:text-stone-700')}
             >
               <UserCheck className="h-4 w-4" /> Attended ({attended.length})
             </button>
@@ -58,9 +58,7 @@ export default function RosterCard({ refreshToken = null, title = "Today's atten
               type="button"
               onClick={() => setTab('missed')}
               className={'flex items-center justify-center gap-2 border-b-2 py-3 transition-colors ' +
-                (tab === 'missed'
-                  ? 'border-red-500 bg-red-50 text-red-700'
-                  : 'border-transparent text-stone-500 hover:text-stone-700')}
+                (tab === 'missed' ? 'border-red-500 bg-red-50 text-red-700' : 'border-transparent text-stone-500 hover:text-stone-700')}
             >
               <UserX className="h-4 w-4" /> Missed ({missed.length})
             </button>
@@ -68,7 +66,7 @@ export default function RosterCard({ refreshToken = null, title = "Today's atten
 
           {shown.length === 0 ? (
             <p className="px-5 py-8 text-center text-sm text-stone-400">
-              {tab === 'attended' ? 'No one has checked in yet.' : 'Everyone has checked in. 🎉'}
+              {tab === 'attended' ? 'No one checked in on this Wednesday.' : 'Everyone attended. 🎉'}
             </p>
           ) : (
             <ul className="max-h-80 divide-y divide-stone-100 overflow-y-auto">
