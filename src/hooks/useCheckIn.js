@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { recordAttendance } from '../services/attendanceService';
-import { createMember, findMemberByPhone } from '../services/membersService';
+import { createMember, findMemberByPhone, updateMemberSemester } from '../services/membersService';
 import { friendlyError } from '../utils/errors';
 import { normalizePhone } from '../utils/phone';
 
@@ -30,6 +30,13 @@ export function useCheckIn() {
         return;
       }
       setMember(found);
+      
+      // NEW: If member exists but has no semester, force update
+      if (!found.semester) {
+        setStep('update-semester');
+        return;
+      }
+
       const result = await recordAttendance(found.id);
       setRecord(result.record);
       setStep(result.created ? 'welcome' : 'already');
@@ -38,6 +45,21 @@ export function useCheckIn() {
       setStep('error');
     }
   }, []);
+
+  const submitSemester = useCallback(async (semesterValue) => {
+    setError(null);
+    setStep('updating-semester');
+    try {
+      const updated = await updateMemberSemester(member.id, semesterValue);
+      setMember(updated);
+      const result = await recordAttendance(updated.id);
+      setRecord(result.record);
+      setStep(result.created ? 'welcome' : 'already');
+    } catch (err) {
+      setError(friendlyError(err));
+      setStep('update-semester');
+    }
+  }, [member]);
 
   const openRegistration = useCallback(() => {
     setError(null);
@@ -65,6 +87,6 @@ export function useCheckIn() {
 
   return {
     step, member, record, prefillPhone, error,
-    reset, submitPhone, openRegistration, submitRegistration,
+    reset, submitPhone, submitSemester, openRegistration, submitRegistration,
   };
 }

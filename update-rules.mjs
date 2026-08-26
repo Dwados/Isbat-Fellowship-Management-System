@@ -1,3 +1,183 @@
+// update-rules.mjs — Adds Wednesday lock + Semester requirements
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+
+const files = {
+
+'src/services/membersService.js': `
+import { supabase } from '../lib/supabase';
+import { normalizePhone } from '../utils/phone';
+
+export async function findMemberByPhone(phone) {
+  const { data, error } = await supabase
+    .from('members')
+    .select('*')
+    .eq('phone', normalizePhone(phone))
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function getMembers(search = '') {
+  const q = search.trim().replace(/[%,()]/g, '');
+  let query = supabase.from('members').select('*').order('name', { ascending: true });
+  if (q) query = query.or('name.ilike.%' + q + '%,phone.ilike.%' + q + '%');
+  const { data, error } = await query;
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getMemberById(id) {
+  const { data, error } = await supabase
+    .from('members')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function createMember({ name, phone, email, course, semester }) {
+  const { data, error } = await supabase
+    .from('members')
+    .insert({
+      name: name.trim(),
+      phone: normalizePhone(phone),
+      email: email?.trim() || null,
+      course: course?.trim() || null,
+      semester: semester?.trim() || null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateMemberSemester(id, semester) {
+  const { data, error } = await supabase
+    .from('members')
+    .update({ semester: semester.trim() })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function countMembers() {
+  const { count, error } = await supabase
+    .from('members')
+    .select('*', { count: 'exact', head: true });
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export async function countNewMembersSince(isoDateTime) {
+  const { count, error } = await supabase
+    .from('members')
+    .select('*', { count: 'exact', head: true })
+    .gte('created_at', isoDateTime);
+  if (error) throw error;
+  return count ?? 0;
+}
+`,
+
+'src/hooks/useCheckIn.js': `
+import { useCallback, useState } from 'react';
+import { recordAttendance } from '../services/attendanceService';
+import { createMember, findMemberByPhone, updateMemberSemester } from '../services/membersService';
+import { friendlyError } from '../utils/errors';
+import { normalizePhone } from '../utils/phone';
+
+export function useCheckIn() {
+  const [step, setStep] = useState('phone');
+  const [member, setMember] = useState(null);
+  const [record, setRecord] = useState(null);
+  const [prefillPhone, setPrefillPhone] = useState('');
+  const [error, setError] = useState(null);
+
+  const reset = useCallback(() => {
+    setStep('phone');
+    setMember(null);
+    setRecord(null);
+    setPrefillPhone('');
+    setError(null);
+  }, []);
+
+  const submitPhone = useCallback(async (rawPhone) => {
+    setError(null);
+    setStep('checking');
+    try {
+      const found = await findMemberByPhone(rawPhone);
+      if (!found) {
+        setPrefillPhone(normalizePhone(rawPhone));
+        setStep('not-found');
+        return;
+      }
+      setMember(found);
+      
+      // NEW: If member exists but has no semester, force update
+      if (!found.semester) {
+        setStep('update-semester');
+        return;
+      }
+
+      const result = await recordAttendance(found.id);
+      setRecord(result.record);
+      setStep(result.created ? 'welcome' : 'already');
+    } catch (err) {
+      setError(friendlyError(err));
+      setStep('error');
+    }
+  }, []);
+
+  const submitSemester = useCallback(async (semesterValue) => {
+    setError(null);
+    setStep('updating-semester');
+    try {
+      const updated = await updateMemberSemester(member.id, semesterValue);
+      setMember(updated);
+      const result = await recordAttendance(updated.id);
+      setRecord(result.record);
+      setStep(result.created ? 'welcome' : 'already');
+    } catch (err) {
+      setError(friendlyError(err));
+      setStep('update-semester');
+    }
+  }, [member]);
+
+  const openRegistration = useCallback(() => {
+    setError(null);
+    setStep('register');
+  }, []);
+
+  const submitRegistration = useCallback(async (form) => {
+    setError(null);
+    setStep('registering');
+    try {
+      const created = await createMember(form);
+      const result = await recordAttendance(created.id);
+      setMember(created);
+      setRecord(result.record);
+      setStep('registered');
+    } catch (err) {
+      if (err?.code === '23505') {
+        setError('That phone number is already registered. Go back and check in with it instead.');
+      } else {
+        setError(friendlyError(err));
+      }
+      setStep('register');
+    }
+  }, []);
+
+  return {
+    step, member, record, prefillPhone, error,
+    reset, submitPhone, submitSemester, openRegistration, submitRegistration,
+  };
+}
+`,
+
+'src/pages/CheckInPage.jsx': `
 import {
   ArrowLeft, CalendarX, CheckCircle2, Clock3, Phone, QrCode, UserCheck, UserPlus, Users, UserX, XCircle,
 } from 'lucide-react';
@@ -334,7 +514,7 @@ function RegisterStep({ prefillPhone, submitting, serverError, onSubmit, onBack 
     const nextErrors = {};
     if (form.name.trim().length < 2) nextErrors.name = 'Please enter your full name.';
     if (!isValidPhone(form.phone)) nextErrors.phone = 'Enter a valid phone number (10–15 digits).';
-    if (form.email.trim() && !/^S+@S+.S+$/.test(form.email.trim())) {
+    if (form.email.trim() && !/^\S+@\S+\.\S+$/.test(form.email.trim())) {
       nextErrors.email = 'Enter a valid email address.';
     }
     if (!form.semester) nextErrors.semester = 'Please select your semester.';
@@ -588,3 +768,19 @@ export default function CheckInPage() {
     </div>
   );
 }
+`,
+
+};
+
+let count = 0;
+for (const [filePath, content] of Object.entries(files)) {
+  const full = join(process.cwd(), filePath);
+  mkdirSync(dirname(full), { recursive: true });
+  writeFileSync(full, content.startsWith('\n') ? content.slice(1) : content);
+  console.log('updated', filePath);
+  count += 1;
+}
+console.log('');
+console.log('Done! ' + count + ' files updated.');
+console.log('Now push to GitHub so Vercel redeploys:');
+console.log('  git add . && git commit -m "Add Wednesday lock and semester rules" && git push');

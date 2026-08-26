@@ -30,7 +30,7 @@ export async function getMemberById(id) {
   return data;
 }
 
-export async function createMember({ name, phone, email, course }) {
+export async function createMember({ name, phone, email, course, semester }) {
   const { data, error } = await supabase
     .from('members')
     .insert({
@@ -38,7 +38,19 @@ export async function createMember({ name, phone, email, course }) {
       phone: normalizePhone(phone),
       email: email?.trim() || null,
       course: course?.trim() || null,
+      semester: semester?.trim() || null,
     })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateMemberSemester(id, semester) {
+  const { data, error } = await supabase
+    .from('members')
+    .update({ semester: semester.trim() })
+    .eq('id', id)
     .select()
     .single();
   if (error) throw error;
