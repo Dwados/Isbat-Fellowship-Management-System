@@ -6,7 +6,6 @@ import AttendancePage from './pages/AttendancePage';
 import CheckInPage from './pages/CheckInPage';
 import DashboardPage from './pages/DashboardPage';
 import KioskPage from './pages/KioskPage';
-import ManualCheckInPage from './pages/ManualCheckInPage';
 import MemberProfilePage from './pages/MemberProfilePage';
 import MembersPage from './pages/MembersPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -27,7 +26,6 @@ export default function App() {
           <Route path="/members/:id" element={<MemberProfilePage />} />
           <Route path="/attendance" element={<AttendancePage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
-          <Route path="/manual-checkin" element={<ManualCheckInPage />} />
         </Route>
       </Route>
 

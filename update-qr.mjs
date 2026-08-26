@@ -1,4 +1,4 @@
-// update-qr.mjs — shorter QR url (/c), stronger QR, manual fallback on kiosk
+// update-qr.mjs — shorter QR url (/c), stronger QR, manual fallback on kiosk (cleaned up)
 // Usage: node update-qr.mjs
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -126,4 +126,4 @@ for (const [filePath, content] of Object.entries(files)) {
 console.log('');
 console.log('Done! ' + count + ' files updated.');
 console.log('Now push to GitHub so Vercel redeploys:');
-console.log('  git add . && git commit -m "Short QR + manual fallback" && git push');
+console.log('  git add . && git commit -m "Update QR code layout" && git push');

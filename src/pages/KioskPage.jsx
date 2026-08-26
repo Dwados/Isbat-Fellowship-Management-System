@@ -46,9 +46,6 @@ export default function KioskPage() {
         </div>
 
         <h1 className="mt-6 text-2xl font-bold sm:text-3xl">Scan to check in</h1>
-        <p className="mt-2 text-sm text-brand-200">
-          Point your phone camera at the code — it opens automatically on iPhone and most Android phones.
-        </p>
 
         <div className="mt-6 w-full rounded-2xl border border-brand-700 bg-brand-900/60 p-4">
           <p className="text-xs font-semibold uppercase tracking-widest text-brand-300">
