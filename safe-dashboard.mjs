@@ -1,4 +1,7 @@
+// safe-dashboard.mjs — Resets the dashboard to a bulletproof "Safe Mode"
+import { writeFileSync } from 'node:fs';
 
+const code = `
 import { format } from 'date-fns';
 import { CalendarCheck, Sparkles, UserRound, UserX } from 'lucide-react';
 import PageHeader from '../components/PageHeader';
@@ -29,3 +32,7 @@ export default function DashboardPage() {
     </>
   );
 }
+`;
+
+writeFileSync('src/pages/DashboardPage.jsx', code);
+console.log('Dashboard reset to Safe Mode!');
