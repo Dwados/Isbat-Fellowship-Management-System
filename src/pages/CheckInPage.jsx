@@ -412,11 +412,6 @@ export default function CheckInPage() {
   const [remembered, setRemembered] = useState(() => getRememberedMember());
   const [manualMode, setManualMode] = useState(false);
 
-  // Block access if not Wednesday
-  if (!isWednesday) {
-    return <ClosedScreen />;
-  }
-
   // Countdown while a final screen is showing
   useEffect(() => {
     if (DONE_STEPS.indexOf(flow.step) === -1) return undefined;
@@ -460,6 +455,11 @@ export default function CheckInPage() {
   useEffect(() => {
     if (flow.step === 'phone') setManualMode(false);
   }, [flow.step]);
+
+  // Block access if not Wednesday (must be after all Hooks)
+  if (!isWednesday) {
+    return <ClosedScreen />;
+  }
 
   const showStreak = flow.step === 'welcome' || flow.step === 'registered' ? streak : 0;
   const resetCounter = DONE_STEPS.indexOf(flow.step) !== -1 ? secondsLeft : null;
